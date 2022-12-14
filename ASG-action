@@ -1,0 +1,32 @@
+import json
+import boto3
+import csv
+import os
+from datetime import datetime
+
+
+s3 = boto3.client('s3')
+client = boto3.client('autoscaling')
+#client = boto3.client('s3')
+os.chdir('/tmp')
+
+def lambda_handler(event, context):
+  data = client.describe_scheduled_actions()
+
+  for asg in data["ScheduledUpdateGroupActions"]:
+    asg_name = asg["AutoScalingGroupName"]
+    action_name = asg["ScheduledActionName"]
+    start_time = asg["StartTime"]
+    end_time = asg["EndTime"]  
+    
+
+  f = open("/tmp/csv_file.csv", "w+")
+  temp_csv_file = csv.writer(f)                       
+  temp_csv_file.writerow(["AutoScalingGroupName","ScheduledActionName","start_time","EndTime"])
+
+  for asg in data["ScheduledUpdateGroupActions"]:
+    temp_csv_file.writerow([asg["AutoScalingGroupName"],asg["ScheduledActionName"],asg["StartTime"].strftime("%m/%d/%Y - %H:%M:%S"),asg["EndTime"].strftime("%m/%d/%Y - %H:%M:%S")])
+  f.close()                         
+  s3.upload_file('/tmp/csv_file.csv', "bucket8534",'final_report.csv') 
+
+
