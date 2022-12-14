@@ -1,0 +1,40 @@
+import botocore
+import boto3
+import time
+
+
+rds = boto3.client('rds')
+#client = session.create_client('lambda')
+def lambda_handler(event, context):
+   
+
+    current_time = time.strftime("%H:%M")
+    
+    print(current_time)
+    
+    dbs = rds.describe_db_instances()
+    
+   
+    
+
+    for db in dbs["DBInstances"]:
+        for value in db["TagList"]:
+            myvar=value["Value"]
+            var=value["Key"]
+            dbid = db["DBInstanceIdentifier"]
+            if var == "stop":
+                if myvar == current_time:
+                    rds.stop_db_instance(DBInstanceIdentifier= dbid)
+                    print(dbid+' stoping')
+                    pass
+                
+            if var == "start":
+                if myvar == current_time:
+                    rds.start_db_instance(DBInstanceIdentifier= dbid)
+                    print(dbid+' starting')
+                    pass
+            
+            
+            
+            
+     
