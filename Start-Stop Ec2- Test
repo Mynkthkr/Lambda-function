@@ -1,0 +1,52 @@
+import boto3
+import os
+
+ec2 = boto3.resource('ec2')
+
+def get_ec2_instances(region, project, state):
+   ec2_instances =[]
+   ec2 = boto3.resource('ec2', region_name=region)
+   filters = [{
+      'Name': 'tag:test',
+      'Values': ['demoec2']
+      },
+      {
+       'Name': 'instance-state-name',
+       'Values': ['state']
+      }
+
+      ]
+      
+   for instance in ec2.instances.filter(Filters=filters):
+      state_name = instance.state['Name']
+      ec2_instances.append(instance)
+   return ec2_instances
+   
+def start_ec2_instance(region, project):
+   instances_to_stop = get_ec2_instances(region, project, 'stopped')
+   instance_state_changed = 0
+   for instance in instances_to_stop:
+      instance.start()
+      instance_state_changed += 1
+   return instance_state_changed
+   
+def stop_ec2_instance(region, project):
+   instances_to_stop = get_ec2_instances(region, project, 'running')
+   instance_state_changed = 0
+   for instance in instances_to_stop:
+      instance.stop()
+      instance_state_changed += 1
+   return instance_state_changed
+   
+
+def lambda_handler(event, context):
+   region = os.getenv('REGION', 'us-east-1')
+   region = os.getenv('PROJECT', 'demo')
+   
+   instance_state_changed = 0
+   if(event.get('action') == 'start'):
+      instance_state_changed = start_ec2_instance(region, project)
+   elif(event.get('action') == 'stop'):
+      instance_state_changed = stop_ec2_instance(region, project)
+      
+   return instance_state_changed
